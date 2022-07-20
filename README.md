@@ -25,5 +25,5 @@ Você pode visualizar o layout do projeto através [desse link](https://www.figm
 - Clone o repositório
 - Instale as dependências com `yarn`
 - Inicie a aplicação com `yarn dev`
-- Inicie o listener dos webhooks com `stripe-cli listen --forward-to localhost:3000/api/webhooks`.
+
 
