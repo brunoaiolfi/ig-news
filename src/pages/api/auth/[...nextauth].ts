@@ -1,6 +1,6 @@
 import { query } from "faunadb";
 
-import NextAuth from "next-auth";
+import NextAuth, { Session } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import { fauna } from "../../../services/faunadb";
 
@@ -24,6 +24,41 @@ export default NextAuth({
 
   callbacks: {
     // Durante a função de login
+
+    async session({ session }) {
+      try {
+        const userActiveSubscription = await fauna.query(
+          query.Get(
+            query.Intersection([
+              query.Match(
+                query.Index("subscription_by_user_ref"),
+                query.Select(
+                  "ref",
+                  query.Get(
+                    query.Match(
+                      query.Index("user_by_email"),
+                      query.Casefold(session.user.email)
+                    )
+                  )
+                )
+              ),
+              query.Match(query.Index("subscription_by_status"), "active"),
+            ])
+          )
+        );
+
+        return {
+          ...session,
+          userActiveSubscription,
+        };
+      } catch (error) {
+        return {
+          ...session,
+          userActiveSubscription: null,
+        }
+      }
+    },
+
     async signIn({ user }) {
       // Coleta o email
       const { email } = user;
@@ -61,8 +96,8 @@ export default NextAuth({
 
         // Se ocorrer algum erro, retorna false, mostrando que o login falhou.
       } catch (error) {
-        console.log('error on login:')
-        console.log(error.message)
+        console.log("error on login:");
+        console.log(error.message);
         return false;
       }
     },
